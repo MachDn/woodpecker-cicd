@@ -1,5 +1,14 @@
 pipeline:
-  first-job:
-    image: busybox
+  build:
+    image: mysql:5.7
     commands:
-      - echo "first run"
+      - while ! mysqladmin ping -h mysql-server -u woodpecker -pwoodpecker --silent; do sleep 1; done
+
+services:
+  mysql-server:
+    image: mysql:5.7
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+      MYSQL_DATABASE: woodpecker
+      MYSQL_USER: woodpecker
+      MYSQL_PASSWORD: woodpecker
