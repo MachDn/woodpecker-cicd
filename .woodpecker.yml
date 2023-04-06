@@ -1,47 +1,14 @@
+#.woodpecker.yml
 pipeline:
-  build:
-    image: docker
+  earthly:
+    image: earthly/earthly:v0.6.30
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - FORCE_COLOR=1
+      - EARTHLY_EXEC_CMD="/bin/sh" 
+    secrets: [REGISTRY, REGISTRY_USER, REGISTRY_PASSWORD]
     commands:
-      - echo "This is the build"
-  docker-build:
-    image: woodpeckerci/plugin-docker-buildx
-    secrets: [docker_username, docker_password]
-    settings:
-      registry: "https://ghcr.io"
-      repo: ghcr.io/gimlet-io/wis
-      dockerfile: Dockerfile
-      platforms: linux/amd64
-      tag: ${CI_COMMIT_SHA}
-  deploy-preview:
-    image: ghcr.io/gimlet-io/woodpecker-plugin:a2073a6d8b6d8315a16e9485fb57281d730dd51c
-    when:
-      branch: !main
-      event: push  
-    secrets: [gimlet_server, gimlet_token]
-    settings:
-      deploy: true
-      env: preview
-      app: wis
-      wait: true
-  deploy-staging:
-    image: ghcr.io/gimlet-io/woodpecker-plugin:a2073a6d8b6d8315a16e9485fb57281d730dd51c
-    when:
-      branch: main
-      event: push  
-    secrets: [gimlet_server, gimlet_token]
-    settings:
-      deploy: true
-      env: staging
-      app: wis
-      wait: true
-  deploy-production:
-    image: ghcr.io/gimlet-io/woodpecker-plugin:a2073a6d8b6d8315a16e9485fb57281d730dd51c
-    when:
-      tag: v*
-      event: tag  
-    secrets: [gimlet_server, gimlet_token]
-    settings:
-      deploy: true
-      env: production
-      app: wis
-      wait: true
+     - docker login -u $${REGISTRY_USER} -p $${REGISTRY_PASSWORD} $${REGISTRY}
+     - earthly bootstrap
+     - earthly --ci --push -P +build
