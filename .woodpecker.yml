@@ -1,14 +1,5 @@
-#.woodpecker.yml
 pipeline:
-  earthly:
-    image: earthly/earthly:v0.6.30
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - FORCE_COLOR=1
-      - EARTHLY_EXEC_CMD="/bin/sh" 
-    secrets: [REGISTRY, REGISTRY_USER, REGISTRY_PASSWORD]
+  first-job:
+    image: busybox
     commands:
-     - docker login -u $${REGISTRY_USER} -p $${REGISTRY_PASSWORD} $${REGISTRY}
-     - earthly bootstrap
-     - earthly --ci --push -P +build
+      - echo "first run"
