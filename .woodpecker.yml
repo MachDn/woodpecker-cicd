@@ -6,19 +6,7 @@ clone:
 pipeline:
   build:
     image: devforth/drone-builder
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     commands:
-      - /bin/bash build.sh
-
-  slack-after-build:
-    image: plugins/slack
-    secrets:
-      - slack_webhook
-    webhook: $SLACK_WEBHOOK
-    username: Woodpecker CI
-    icon_url: ${CI_COMMIT_AUTHOR_AVATAR}
-    template: >
-      {{repo.name}}/{{build.branch}} - #{{build.number}} {{uppercasefirst build.status}} after {{since build.started}} (<{{build.link}}|Open>)
-    when:
-      status:
-        - success
-        - failure
+      - cd deploy && /bin/bash build.sh
