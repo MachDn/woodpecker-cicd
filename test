@@ -1,0 +1,8 @@
+pipeline:
+  webhook:
+    image: foo/webhook
+    settings:
+      url: http://example.com
+      method: post
+      body: |
+        hello world
