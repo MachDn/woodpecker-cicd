@@ -1,12 +1,12 @@
-clone:
-  git:
-    image: plugins/git
-    depth: 1
-
 pipeline:
-  build:
-    image: devforth/drone-builder
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+  backend:
+    image: golang
     commands:
-      - cd deploy && /bin/bash build.sh
+      - go build
+      - go test
+  frontend:
+    image: node
+    commands:
+      - npm install
+      - npm run test
+      - npm run build
