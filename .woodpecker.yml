@@ -1,10 +1,35 @@
-clone:
-  git:
-    image: plugins/git
-    depth: 1
+stages:
+  - build
+  - test
+  - deploy
 
-pipeline:
-  build:
-    image: devforth/drone-builder
-    commands:
-      - cd deploy && /bin/bash build.sh
+build:
+  stage: build
+  image: node:12
+  script:
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - build/
+
+test:
+  stage: test
+  image: node:12
+  script:
+    - npm install
+    - npm run test
+
+deploy:
+  stage: deploy
+  image: docker:stable
+  services:
+    - docker:dind
+  script:
+    - docker build -t myapp:$CI_COMMIT_SHORT_SHA .
+    - docker tag myapp:$CI_COMMIT_SHORT_SHA myapp:latest
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    - docker push myapp:$CI_COMMIT_SHORT_SHA
+    - docker push myapp:latest
+  only:
+    - master
