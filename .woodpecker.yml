@@ -1,47 +1,26 @@
-# Example Woodpecker CI yaml file for a typical Hexo site
+clone:
+  git:
+    image: plugins/git
+    depth: 1
 
 pipeline:
-  # Build step: it generates the files for the Hexo site
   build:
-    image: node:lts-alpine
+    image: devforth/drone-builder
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock
     commands:
-      - cd src
-      - npm install hexo-cli -g
-      - test -e package.json && npm install
-      - hexo generate
-      - cd ..
-    when:
-      branch:
-        # Only run on these branches
-        include: [ main ]
-        # ...and never on pages branch (to ignore build triggered by CI commits)
-        exclude: pages
-      # Execute on every event except "pull_request"
-      event: [push, tag, deployment]
+      - /bin/bash build.sh
 
-  # Push step: it pushes the build output to "pages" branch
-  push:
-    image: appleboy/drone-git-push
-    settings:
-      branch: pages
-      remote: git@codeberg.org:hexo-test/pages.git
-      # To work around "rejected...fetch first" error
-      force: true
-      commit: true
-      commit_message: "Woodpecker build ${CI_COMMIT_SHA:0:7}"
-      # Replace with your username for the commit
-      author_name: "adnan360"
-      # Replace with your email for the commit
-      author_email: "adnan360@protonmail.com"
-      ssh_key:
-        from_secret: ssh_key
+  slack-after-build:
+    image: plugins/slack
+    secrets:
+      - slack_webhook
+    webhook: $SLACK_WEBHOOK
+    username: Woodpecker CI
+    icon_url: ${CI_COMMIT_AUTHOR_AVATAR}
+    template: >
+      {{repo.name}}/{{build.branch}} - #{{build.number}} {{uppercasefirst build.status}} after {{since build.started}} (<{{build.link}}|Open>)
     when:
-      # Only try to commit if previous step is successful
-      status: success
-      branch:
-        # Only run on these branches
-        include: [ main ]
-        # ...and never on pages branch (to ignore build triggered by CI commits)
-        exclude: pages
-      # Execute on every event except "pull_request"
-      event: [push, tag, deployment]
+      status:
+        - success
+        - failure
